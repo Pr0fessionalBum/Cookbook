@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe App - <%= recipe.name %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/main.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <h1><%= recipe.name %></h1>
+    <nav>
+      <a href="index.ejs">Home</a> | 
+      <a href="recipes.ejs">Recipes</a> | 
+      <a href="add-recipe.ejs">Add Recipe</a>
+    </nav>
+    <p><strong>Origin:</strong> <%= recipe.origin %></p>
+    <p><strong>Cooking Time:</strong> <%= recipe.cookTime %> minutes</p>
+    <h2>Ingredients</h2>
+    <ul>
+      <% ingredients.forEach(ingredient => { %>
+        <li class="ingredient" data-origin="<%= ingredient.origin %>"><%= ingredient.name %></li>
+      <% }) %>
+    </ul>
+  </div>
+</body>
+</html>
