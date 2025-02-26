@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recipes</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="../Public/css/recipestyle.css">
 </head>
 <body>
   <div class="container">
@@ -18,7 +18,7 @@
       <h2><%= protein %></h2>
       <ul>
         <% categorizedRecipes[protein].forEach(recipe => { %>
-          <li><a href="recipes.ejs/<%= recipe.id %>"><%= recipe.name %></a></li>
+          <li><a href="recipes.js/<%= recipe.id %>"><%= recipe.name %></a></li>
         <% }) %>
       </ul>
     <% } %>
