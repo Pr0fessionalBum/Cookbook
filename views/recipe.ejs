@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+
+<div class="recipe-detail">
+    <h1><%= recipe.name %></h1>
+
+    <div class="recipe-content">
+        <section class="ingredients-section">
+            <h2>Ingredients</h2>
+            <% const types = ['protein', 'vegetable', 'grain', 'dairy', 'spice', 'other']; %>
+            <% types.forEach(type => { %>
+                <% const typeIngredients = recipe.ingredients.filter(i => i.type === type); %>
+                <% if (typeIngredients.length > 0) { %>
+                    <div class="ingredient-type">
+                        <h3><%= type.charAt(0).toUpperCase() + type.slice(1) %></h3>
+                        <ul>
+                            <% typeIngredients.forEach(ingredient => { %>
+                                <li class="ingredient">
+                                    <%= ingredient.name %>
+                                    <% if (ingredient.info) { %>
+                                        <div class="ingredient-tooltip">
+                                            <%= ingredient.info %>
+                                        </div>
+                                    <% } %>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% } %>
+            <% }) %>
+        </section>
+
+        <section class="instructions-section">
+            <h2>Instructions</h2>
+            <ol>
+                <% recipe.instructions.split('\n').forEach(step => { %>
+                    <% if (step.trim()) { %>
+                        <li><%= step.trim() %></li>
+                    <% } %>
+                <% }) %>
+            </ol>
+        </section>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

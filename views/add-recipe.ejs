@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+
+<div class="add-recipe-container">
+    <h1>Add New Recipe</h1>
+
+    <form id="add-recipe-form" action="/add-recipe" method="POST">
+        <div class="form-group">
+            <label for="recipe-name">Recipe Name</label>
+            <input type="text" id="recipe-name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="recipe-instructions">Instructions</label>
+            <textarea id="recipe-instructions" name="instructions" rows="10" required
+                      placeholder="Enter each step on a new line"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Ingredients</label>
+            <div class="ingredients-section">
+                <% const types = ['protein', 'vegetable', 'grain', 'dairy', 'spice', 'other']; %>
+                <% types.forEach(type => { %>
+                    <div class="ingredient-type">
+                        <h3><%= type.charAt(0).toUpperCase() + type.slice(1) %></h3>
+                        <% const typeIngredients = ingredients.filter(i => i.type === type); %>
+                        <div class="ingredient-options">
+                            <% typeIngredients.forEach(ingredient => { %>
+                                <div class="ingredient-option">
+                                    <input type="checkbox" 
+                                           id="ingredient-<%= ingredient.id %>" 
+                                           name="ingredients" 
+                                           value="<%= ingredient.id %>">
+                                    <label for="ingredient-<%= ingredient.id %>">
+                                        <%= ingredient.name %>
+                                        <span class="info-tooltip" title="<%= ingredient.info %>">ℹ️</span>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <button type
