@@ -82,9 +82,7 @@ router.get('/recipes', async (req, res) => {
         });
 
         res.render('recipes', {
-            categorizedRecipes: categories,
-            currentTime: '2025-02-27 04:47:07',
-            currentUser: 'Pr0fessionalBum'
+            categorizedRecipes: categories
         });
     } catch (error) {
         console.error('Error:', error);
@@ -222,9 +220,7 @@ router.post('/add-recipe', async (req, res) => {
         await conn.rollback();
         console.error('Error adding recipe:', error);
         res.status(500).render('error', {
-            error: 'Error adding recipe: ' + error.message,
-            currentTime: '2025-02-27 06:37:03',
-            currentUser: 'Pr0fessionalBum'
+            error: 'Error adding recipe: ' + error.message
         });
     } finally {
         conn.release();
