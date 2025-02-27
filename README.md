@@ -2,17 +2,6 @@
 
 A modern, responsive web application for managing and sharing recipes. Built with Node.js, Express, and MySQL.
 
-![Cookapedia Logo](public/images/logo.png)
-
-## Features
-
-- 🔍 Search recipes by name or ingredients
-- 📝 Add and manage recipes
-- 📱 Responsive design for all devices
-- 💡 Ingredient information tooltips
-- 🗂️ Organized recipe categories
-- 🎨 Modern and intuitive interface
-
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
