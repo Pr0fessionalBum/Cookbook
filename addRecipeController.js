@@ -4,7 +4,7 @@ exports.getAddRecipePage = (req, res) => {
     let query = "SELECT * FROM Ingredients";
     db.query(query, (err, results) => {
         if (err) throw err;
-        res.render('pages/add-recipe', { ingredients: results });
+        res.render('./add-recipe', { ingredients: results });
     });
 };
 
@@ -14,6 +14,6 @@ exports.postAddRecipe = (req, res) => {
     let query = `INSERT INTO Recipes (name, origin, safetyTips, cookTime, ingredients) VALUES ('${name}', '${origin}', '${safetyTips}', ${cookTime}, '${ingredientsJson}')`;
     db.query(query, (err, result) => {
         if (err) throw err;
-        res.redirect('/recipes');
+        res.redirect('./recipes');
     });
 };
