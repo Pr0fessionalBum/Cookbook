@@ -5,13 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cookapedia</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <header class="main-header">
         <div class="header-content">
             <div class="brand">
-                <h1>Cookapedia</h1>
-                <span class="tagline">Your Digital Cookbook</span>
+                <div class="logo-container">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="title-container">
+                    <h1>Cookapedia</h1>
+                    <span class="tagline">Your Digital Cookbook</span>
+                </div>
             </div>
             <nav class="main-nav">
                 <ul>
@@ -50,8 +56,35 @@ body {
 
 .brand {
     display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-container {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.logo-container:hover {
+    transform: rotate(20deg);
+}
+
+.logo-container i {
+    background: linear-gradient(45deg, #fff, #e3f2fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.title-container {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
 }
 
 .brand h1 {
@@ -127,6 +160,15 @@ body {
     }
 
     .brand {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .logo-container {
+        margin-bottom: 10px;
+    }
+
+    .title-container {
         align-items: center;
     }
 
