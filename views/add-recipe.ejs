@@ -4,13 +4,11 @@
     <h1>Add New Recipe</h1>
 
     <form id="add-recipe-form" action="/add-recipe" method="POST">
-        <!-- Recipe Name -->
         <div class="form-group">
             <label for="recipe-name">Recipe Name</label>
             <input type="text" id="recipe-name" name="name" required class="form-input">
         </div>
 
-        <!-- Ingredient Selection -->
         <div class="form-group">
             <label>Select Ingredients</label>
             <div class="select-container">
@@ -28,20 +26,17 @@
                 <button type="button" id="add-ingredient-btn" class="btn btn-add">Add Ingredient</button>
             </div>
 
-            <!-- Selected Ingredients Display -->
             <div id="selected-ingredients" class="selected-ingredients">
                 <h3>Selected Ingredients:</h3>
                 <div id="selected-ingredients-list"></div>
             </div>
         </div>
 
-        <!-- Instructions -->
         <div class="form-group">
             <label for="recipe-instructions">Instructions (Enter each step on a new line)</label>
             <textarea id="recipe-instructions" name="instructions" rows="10" required class="form-input"></textarea>
         </div>
 
-        <!-- Form Actions -->
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save Recipe</button>
             <a href="/recipes" class="btn btn-secondary">Back to Recipes</a>
@@ -185,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const selectedIngredients = new Set();
 
-    // Update ingredient select based on type
     typeSelect.addEventListener('change', function() {
         const type = this.value;
         ingredientSelect.innerHTML = '<option value="">Select Ingredient</option>';
@@ -205,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Add ingredient to selection
     addButton.addEventListener('click', function() {
         const selectedId = ingredientSelect.value;
         if (!selectedId) return;
@@ -216,14 +209,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ingredient && !selectedIngredients.has(selectedId)) {
             selectedIngredients.add(selectedId);
             
-            // Add hidden input for form submission
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'ingredients';
             input.value = selectedId;
             form.appendChild(input);
             
-            // Add ingredient tag to display
             const tag = document.createElement('div');
             tag.className = 'selected-ingredient-tag';
             tag.innerHTML = `
@@ -232,34 +223,26 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             selectedList.appendChild(tag);
             
-            // Reset ingredient select
             ingredientSelect.value = '';
-            // Refresh available ingredients
             typeSelect.dispatchEvent(new Event('change'));
         }
     });
 
-    // Remove ingredient
     selectedList.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-ingredient')) {
             const id = e.target.dataset.id;
             
-            // Remove from selected set
             selectedIngredients.delete(id);
             
-            // Remove hidden input
             const input = form.querySelector(`input[name="ingredients"][value="${id}"]`);
             if (input) input.remove();
             
-            // Remove tag
             e.target.parentElement.remove();
             
-            // Refresh available ingredients
             typeSelect.dispatchEvent(new Event('change'));
         }
     });
 
-    // Form validation
     form.addEventListener('submit', function(e) {
         if (selectedIngredients.size === 0) {
             e.preventDefault();

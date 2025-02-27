@@ -185,10 +185,8 @@ body {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Get current path
     const currentPath = window.location.pathname;
     
-    // Update active state for nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.getAttribute('href') === currentPath) {
             link.classList.add('active');
