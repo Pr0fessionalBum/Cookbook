@@ -103,7 +103,6 @@ router.get('/add-recipe', async (req, res) => {
             ORDER BY FIELD(type, 'protein', 'vegetable', 'grain', 'dairy', 'spice', 'other'), name
         `);
 
-        // Group ingredients by type
         const groupedIngredients = {};
         ingredients.forEach(ingredient => {
             if (!groupedIngredients[ingredient.type]) {
@@ -180,7 +179,7 @@ router.get('/recipe/:id', async (req, res) => {
     }
 });
 
-// Add new recipe
+// POST route for adding a new recipe
 router.post('/add-recipe', async (req, res) => {
     const conn = await db.getConnection();
     try {
@@ -193,16 +192,23 @@ router.post('/add-recipe', async (req, res) => {
             throw new Error('Missing required fields');
         }
 
-        // Insert recipe
+        // Insert the recipe (removed created_at field)
         const [recipeResult] = await conn.query(
             'INSERT INTO recipes (name, instructions) VALUES (?, ?)',
             [name, instructions]
         );
 
+        const recipeId = recipeResult.insertId;
+
+        // Handle ingredients (could be single value or array)
         const ingredientArray = Array.isArray(ingredients) ? ingredients : [ingredients];
 
+        // Insert recipe-ingredient relationships
         if (ingredientArray.length > 0) {
-            const ingredientValues = ingredientArray.map(id => [recipeResult.insertId, parseInt(id)]);
+            const ingredientValues = ingredientArray.map(ingredientId => 
+                [recipeId, parseInt(ingredientId)]
+            );
+
             await conn.query(
                 'INSERT INTO recipe_ingredients (recipe_id, ingredient_id) VALUES ?',
                 [ingredientValues]
@@ -214,9 +220,11 @@ router.post('/add-recipe', async (req, res) => {
 
     } catch (error) {
         await conn.rollback();
-        console.error('Error:', error);
+        console.error('Error adding recipe:', error);
         res.status(500).render('error', {
-            error: 'Error adding recipe'
+            error: 'Error adding recipe: ' + error.message,
+            currentTime: '2025-02-27 06:37:03',
+            currentUser: 'Pr0fessionalBum'
         });
     } finally {
         conn.release();
