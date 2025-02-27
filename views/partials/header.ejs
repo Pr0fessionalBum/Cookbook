@@ -3,23 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe App</title>
-    <link rel="stylesheet" href="/css/styles.css">
+    <title>Cookapedia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="container">
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/recipes">Recipes</a></li>
-                    <li><a href="/add-recipe">Add Recipe</a></li>
-                </ul>
-                <div class="user-info">
-                    <span class="username"><%= currentUser %></span>
-                    <span class="timestamp"><%= currentTime %></span>
-                </div>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="brand">
+                <h1>Cookapedia</h1>
+                <span class="tagline">Your Digital Cookbook</span>
             </div>
-        </nav>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="/" class="nav-link <%= currentPath === '/' ? 'active' : '' %>">Home</a></li>
+                    <li><a href="/recipes" class="nav-link <%= currentPath === '/recipes' ? 'active' : '' %>">Recipes</a></li>
+                    <li><a href="/add-recipe" class="nav-link <%= currentPath === '/add-recipe' ? 'active' : '' %>">Add Recipe</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
-    <main class="container">
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #f5f6fa;
+}
+
+.main-header {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.brand h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    margin: 0;
+    background: linear-gradient(45deg, #fff, #e3f2fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.tagline {
+    font-size: 0.9rem;
+    color: #e3f2fd;
+    margin-top: -5px;
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #e3f2fd;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #e3f2fd;
+}
+
+.nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-link.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e3f2fd;
+}
+
+.nav-link.active::after {
+    transform: scaleX(1);
+    background: #e74c3c;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .brand {
+        align-items: center;
+    }
+
+    .main-nav ul {
+        gap: 1rem;
+    }
+
+    .nav-link {
+        font-size: 1rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Get current path
+    const currentPath = window.location.pathname;
+    
+    // Update active state for nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+});
+</script>
+</body>
+</html>

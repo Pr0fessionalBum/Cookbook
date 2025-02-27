@@ -4,42 +4,277 @@
     <h1>Add New Recipe</h1>
 
     <form id="add-recipe-form" action="/add-recipe" method="POST">
+        <!-- Recipe Name -->
         <div class="form-group">
             <label for="recipe-name">Recipe Name</label>
-            <input type="text" id="recipe-name" name="name" required>
+            <input type="text" id="recipe-name" name="name" required class="form-input">
         </div>
 
+        <!-- Ingredient Selection -->
         <div class="form-group">
-            <label for="recipe-instructions">Instructions</label>
-            <textarea id="recipe-instructions" name="instructions" rows="10" required
-                      placeholder="Enter each step on a new line"></textarea>
-        </div>
+            <label>Select Ingredients</label>
+            <div class="select-container">
+                <select id="ingredient-type" class="form-select">
+                    <option value="">Select Ingredient Type</option>
+                    <% Object.keys(ingredients).forEach(type => { %>
+                        <option value="<%= type %>"><%= type.charAt(0).toUpperCase() + type.slice(1) %></option>
+                    <% }); %>
+                </select>
 
-        <div class="form-group">
-            <label>Ingredients</label>
-            <div class="ingredients-section">
-                <% const types = ['protein', 'vegetable', 'grain', 'dairy', 'spice', 'other']; %>
-                <% types.forEach(type => { %>
-                    <div class="ingredient-type">
-                        <h3><%= type.charAt(0).toUpperCase() + type.slice(1) %></h3>
-                        <% const typeIngredients = ingredients.filter(i => i.type === type); %>
-                        <div class="ingredient-options">
-                            <% typeIngredients.forEach(ingredient => { %>
-                                <div class="ingredient-option">
-                                    <input type="checkbox" 
-                                           id="ingredient-<%= ingredient.id %>" 
-                                           name="ingredients" 
-                                           value="<%= ingredient.id %>">
-                                    <label for="ingredient-<%= ingredient.id %>">
-                                        <%= ingredient.name %>
-                                        <span class="info-tooltip" title="<%= ingredient.info %>">ℹ️</span>
-                                    </label>
-                                </div>
-                            <% }) %>
-                        </div>
-                    </div>
-                <% }) %>
+                <select id="ingredient-select" class="form-select">
+                    <option value="">First select a type</option>
+                </select>
+
+                <button type="button" id="add-ingredient-btn" class="btn btn-add">Add Ingredient</button>
+            </div>
+
+            <!-- Selected Ingredients Display -->
+            <div id="selected-ingredients" class="selected-ingredients">
+                <h3>Selected Ingredients:</h3>
+                <div id="selected-ingredients-list"></div>
             </div>
         </div>
 
-        <button type
+        <!-- Instructions -->
+        <div class="form-group">
+            <label for="recipe-instructions">Instructions (Enter each step on a new line)</label>
+            <textarea id="recipe-instructions" name="instructions" rows="10" required class="form-input"></textarea>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Recipe</button>
+            <a href="/recipes" class="btn btn-secondary">Back to Recipes</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.add-recipe-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.select-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.form-select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    min-width: 200px;
+}
+
+.selected-ingredients {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.selected-ingredients h3 {
+    margin: 0 0 10px 0;
+    color: #444;
+}
+
+#selected-ingredients-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.selected-ingredient-tag {
+    background: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 15px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.remove-ingredient {
+    margin-left: 5px;
+    cursor: pointer;
+    color: #666;
+    border: none;
+    background: none;
+    padding: 0 5px;
+}
+
+.remove-ingredient:hover {
+    color: #dc3545;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-add {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-add:hover {
+    background-color: #218838;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ingredientData = JSON.parse('<%- JSON.stringify(ingredients) %>');
+    const typeSelect = document.getElementById('ingredient-type');
+    const ingredientSelect = document.getElementById('ingredient-select');
+    const addButton = document.getElementById('add-ingredient-btn');
+    const selectedList = document.getElementById('selected-ingredients-list');
+    const form = document.getElementById('add-recipe-form');
+    
+    const selectedIngredients = new Set();
+
+    // Update ingredient select based on type
+    typeSelect.addEventListener('change', function() {
+        const type = this.value;
+        ingredientSelect.innerHTML = '<option value="">Select Ingredient</option>';
+        
+        if (type && ingredientData[type]) {
+            ingredientData[type].forEach(ingredient => {
+                if (!selectedIngredients.has(ingredient.id.toString())) {
+                    const option = document.createElement('option');
+                    option.value = ingredient.id;
+                    option.textContent = ingredient.name;
+                    if (ingredient.info) {
+                        option.title = ingredient.info;
+                    }
+                    ingredientSelect.appendChild(option);
+                }
+            });
+        }
+    });
+
+    // Add ingredient to selection
+    addButton.addEventListener('click', function() {
+        const selectedId = ingredientSelect.value;
+        if (!selectedId) return;
+
+        const type = typeSelect.value;
+        const ingredient = ingredientData[type].find(i => i.id.toString() === selectedId);
+        
+        if (ingredient && !selectedIngredients.has(selectedId)) {
+            selectedIngredients.add(selectedId);
+            
+            // Add hidden input for form submission
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ingredients';
+            input.value = selectedId;
+            form.appendChild(input);
+            
+            // Add ingredient tag to display
+            const tag = document.createElement('div');
+            tag.className = 'selected-ingredient-tag';
+            tag.innerHTML = `
+                ${ingredient.name}
+                <button type="button" class="remove-ingredient" data-id="${selectedId}">&times;</button>
+            `;
+            selectedList.appendChild(tag);
+            
+            // Reset ingredient select
+            ingredientSelect.value = '';
+            // Refresh available ingredients
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Remove ingredient
+    selectedList.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-ingredient')) {
+            const id = e.target.dataset.id;
+            
+            // Remove from selected set
+            selectedIngredients.delete(id);
+            
+            // Remove hidden input
+            const input = form.querySelector(`input[name="ingredients"][value="${id}"]`);
+            if (input) input.remove();
+            
+            // Remove tag
+            e.target.parentElement.remove();
+            
+            // Refresh available ingredients
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (selectedIngredients.size === 0) {
+            e.preventDefault();
+            alert('Please select at least one ingredient');
+            return;
+        }
+
+        const instructions = document.getElementById('recipe-instructions').value.trim();
+        if (!instructions) {
+            e.preventDefault();
+            alert('Please add instructions for the recipe');
+            return;
+        }
+    });
+});
+</script>
+
+<%- include('partials/footer') %>

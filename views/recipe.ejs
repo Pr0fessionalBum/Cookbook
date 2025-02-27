@@ -1,45 +1,201 @@
 <%- include('partials/header') %>
 
-<div class="recipe-detail">
-    <h1><%= recipe.name %></h1>
+<div class="recipe-container">
+    <div class="recipe-header">
+        <h1><%= recipe.name %></h1>
+        <span class="recipe-category"><%= recipe.category %></span>
+    </div>
 
     <div class="recipe-content">
-        <section class="ingredients-section">
+        <div class="ingredients-section">
             <h2>Ingredients</h2>
-            <% const types = ['protein', 'vegetable', 'grain', 'dairy', 'spice', 'other']; %>
-            <% types.forEach(type => { %>
-                <% const typeIngredients = recipe.ingredients.filter(i => i.type === type); %>
-                <% if (typeIngredients.length > 0) { %>
-                    <div class="ingredient-type">
-                        <h3><%= type.charAt(0).toUpperCase() + type.slice(1) %></h3>
-                        <ul>
-                            <% typeIngredients.forEach(ingredient => { %>
-                                <li class="ingredient">
-                                    <%= ingredient.name %>
-                                    <% if (ingredient.info) { %>
-                                        <div class="ingredient-tooltip">
-                                            <%= ingredient.info %>
-                                        </div>
-                                    <% } %>
-                                </li>
-                            <% }) %>
-                        </ul>
+            <div class="ingredients-list" id="ingredientsList">
+                <% 
+                const ingredients = recipe.ingredient_names ? recipe.ingredient_names.split(', ') : [];
+                const types = recipe.ingredient_types ? recipe.ingredient_types.split(', ') : [];
+                %>
+                <% ingredients.forEach((ingredient, index) => { %>
+                    <div class="ingredient-item" 
+                         data-ingredient="<%= ingredient %>"
+                         data-type="<%= types[index] || 'unknown' %>">
+                        <%= ingredient %>
+                        <div class="ingredient-tooltip"></div>
                     </div>
-                <% } %>
-            <% }) %>
-        </section>
+                <% }); %>
+            </div>
+        </div>
 
-        <section class="instructions-section">
+        <div class="instructions-section">
             <h2>Instructions</h2>
-            <ol>
-                <% recipe.instructions.split('\n').forEach(step => { %>
-                    <% if (step.trim()) { %>
-                        <li><%= step.trim() %></li>
-                    <% } %>
-                <% }) %>
-            </ol>
-        </section>
+            <div class="instructions-list">
+                <% recipe.instructionSteps.forEach(step => { %>
+                    <div class="instruction-step"><%= step %></div>
+                <% }); %>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.recipe-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.recipe-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.recipe-header h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.recipe-category {
+    display: inline-block;
+    padding: 5px 15px;
+    background: #3498db;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+.recipe-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.ingredients-section h2,
+.instructions-section h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #3498db;
+}
+
+.ingredients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ingredient-item {
+    position: relative;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ingredient-item:hover {
+    background: #e3f2fd;
+}
+
+.ingredient-tooltip {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    width: max-content;
+    max-width: 300px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.ingredient-tooltip::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: #2c3e50;
+}
+
+.ingredient-item:hover .ingredient-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.instructions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.instruction-step {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    line-height: 1.6;
+    color: #444;
+    transition: background-color 0.3s ease;
+}
+
+.instruction-step:hover {
+    background: #e3f2fd;
+}
+
+@media (max-width: 768px) {
+    .recipe-content {
+        grid-template-columns: 1fr;
+    }
+
+    .ingredient-tooltip {
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+        margin-top: 10px;
+    }
+
+    .ingredient-tooltip::before {
+        right: auto;
+        left: 50%;
+        top: -12px;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-bottom-color: #2c3e50;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('/api/ingredients');
+        const ingredients = await response.json();
+        
+        const ingredientMap = {};
+        ingredients.forEach(ing => {
+            ingredientMap[ing.name.toLowerCase()] = ing.info;
+        });
+
+        document.querySelectorAll('.ingredient-item').forEach(item => {
+            const ingredientName = item.dataset.ingredient.toLowerCase();
+            const tooltip = item.querySelector('.ingredient-tooltip');
+            const info = ingredientMap[ingredientName] || 'No additional information available';
+            tooltip.textContent = info;
+        });
+    } catch (error) {
+        console.error('Error fetching ingredient information:', error);
+    }
+});
+</script>
 
 <%- include('partials/footer') %>

@@ -4,140 +4,233 @@ const db = require('../config/database');
 
 // Get all recipes
 router.get('/recipes', async (req, res) => {
-  try {
-    // First get all recipes
-    const [recipes] = await db.query(`
-      SELECT * FROM recipes ORDER BY name
-    `);
+    try {
+        const [recipes] = await db.query(`
+            SELECT 
+                r.id,
+                r.name,
+                GROUP_CONCAT(DISTINCT i.name) as ingredient_names,
+                GROUP_CONCAT(DISTINCT i.type) as ingredient_types
+            FROM recipes r
+            LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+            LEFT JOIN ingredients i ON ri.ingredient_id = i.id
+            GROUP BY r.id, r.name
+            ORDER BY r.name
+        `);
 
-    // For each recipe, get its ingredients
-    const enrichedRecipes = await Promise.all(recipes.map(async (recipe) => {
-      const [ingredients] = await db.query(`
-        SELECT i.* 
-        FROM ingredients i 
-        JOIN recipe_ingredients ri ON i.id = ri.ingredient_id 
-        WHERE ri.recipe_id = ?
-      `, [recipe.id]);
-      
-      return {
-        ...recipe,
-        ingredients: ingredients
-      };
-    }));
+        const categories = {
+            'Chicken Dishes': [],
+            'Beef Dishes': [],
+            'Pork Dishes': [], 
+            'Seafood': [],
+            'Vegetarian': [],
+            'Pasta & Noodles': [],
+            'Soups & Stews': [],
+            'Salads': [],
+            'Other': []
+        };
 
-    // Create categories based on protein types
-    const categorizedRecipes = {
-      chicken: [],
-      beef: [],
-      tofu: [],
-      other: []
-    };
-
-    // Categorize recipes based on their protein ingredients
-    enrichedRecipes.forEach(recipe => {
-      const proteins = recipe.ingredients.filter(i => i.type === 'protein');
-      
-      if (proteins.length === 0) {
-        categorizedRecipes.other.push(recipe);
-      } else {
-        proteins.forEach(protein => {
-          const category = protein.name.toLowerCase();
-          if (categorizedRecipes[category]) {
-            categorizedRecipes[category].push(recipe);
-          } else {
-            categorizedRecipes.other.push(recipe);
-          }
+        recipes.forEach(recipe => {
+            const ingredients = recipe.ingredient_names ? recipe.ingredient_names.toLowerCase() : '';
+            const types = recipe.ingredient_types ? recipe.ingredient_types.toLowerCase() : '';
+            
+            if (ingredients.includes('chicken')) {
+                categories['Chicken Dishes'].push(recipe);
+            }
+            else if (ingredients.includes('pork') || 
+                     ingredients.includes('ham') || 
+                     ingredients.includes('bacon')) {
+                categories['Pork Dishes'].push(recipe);
+            }
+            else if (ingredients.includes('beef')) {
+                categories['Beef Dishes'].push(recipe);
+            }
+            else if (ingredients.includes('fish') || 
+                     ingredients.includes('shrimp') || 
+                     ingredients.includes('salmon')) {
+                categories['Seafood'].push(recipe);
+            }
+            else if (ingredients.includes('pasta') || 
+                     ingredients.includes('noodle')) {
+                categories['Pasta & Noodles'].push(recipe);
+            }
+            else if (ingredients.includes('soup') || 
+                     ingredients.includes('stew')) {
+                categories['Soups & Stews'].push(recipe);
+            }
+            else if (ingredients.includes('salad') || 
+                     ingredients.includes('lettuce')) {
+                categories['Salads'].push(recipe);
+            }
+            else if (!ingredients.includes('meat') && 
+                     !ingredients.includes('chicken') && 
+                     !ingredients.includes('fish') && 
+                     !ingredients.includes('pork') && 
+                     !ingredients.includes('beef')) {
+                categories['Vegetarian'].push(recipe);
+            }
+            else {
+                categories['Other'].push(recipe);
+            }
         });
-      }
-    });
 
-    res.render('recipes', { categorizedRecipes });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).render('error', { error: 'Error fetching recipes' });
-  }
+        // Remove empty categories
+        Object.keys(categories).forEach(key => {
+            if (categories[key].length === 0) {
+                delete categories[key];
+            }
+        });
+
+        res.render('recipes', {
+            categorizedRecipes: categories,
+            currentTime: '2025-02-27 04:47:07',
+            currentUser: 'Pr0fessionalBum'
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).render('error', { 
+            error: 'Error fetching recipes'
+        });
+    }
+});
+
+// Get add recipe form
+router.get('/add-recipe', async (req, res) => {
+    try {
+        const [ingredients] = await db.query(`
+            SELECT id, name, type, info
+            FROM ingredients
+            ORDER BY FIELD(type, 'protein', 'vegetable', 'grain', 'dairy', 'spice', 'other'), name
+        `);
+
+        // Group ingredients by type
+        const groupedIngredients = {};
+        ingredients.forEach(ingredient => {
+            if (!groupedIngredients[ingredient.type]) {
+                groupedIngredients[ingredient.type] = [];
+            }
+            groupedIngredients[ingredient.type].push(ingredient);
+        });
+
+        res.render('add-recipe', {
+            ingredients: groupedIngredients
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).render('error', { 
+            error: 'Error loading add recipe form'
+        });
+    }
 });
 
 // Get single recipe
 router.get('/recipe/:id', async (req, res) => {
-  try {
-    // Get recipe details
-    const [recipes] = await db.query('SELECT * FROM recipes WHERE id = ?', [req.params.id]);
-    
-    if (recipes.length === 0) {
-      return res.status(404).render('error', { error: 'Recipe not found' });
+    try {
+        const [recipe] = await db.query(`
+            SELECT 
+                r.*,
+                GROUP_CONCAT(DISTINCT i.name SEPARATOR ', ') as ingredient_names,
+                GROUP_CONCAT(DISTINCT i.type SEPARATOR ', ') as ingredient_types
+            FROM recipes r
+            LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+            LEFT JOIN ingredients i ON ri.ingredient_id = i.id
+            WHERE r.id = ?
+            GROUP BY r.id
+        `, [req.params.id]);
+
+        if (!recipe[0]) {
+            return res.status(404).render('error', { 
+                error: 'Recipe not found'
+            });
+        }
+
+        const instructionSteps = recipe[0].instructions ? recipe[0].instructions.split('\n').filter(step => step.trim()) : [];
+
+        // Determine recipe category
+        let category = 'Other';
+        const ingredients = recipe[0].ingredient_names ? recipe[0].ingredient_names.toLowerCase() : '';
+        
+        if (ingredients.includes('chicken')) {
+            category = 'Chicken Dishes';
+        } else if (ingredients.includes('pork') || 
+                   ingredients.includes('ham') || 
+                   ingredients.includes('bacon')) {
+            category = 'Pork Dishes';
+        } else if (ingredients.includes('beef')) {
+            category = 'Beef Dishes';
+        } else if (ingredients.includes('fish') || 
+                   ingredients.includes('shrimp') || 
+                   ingredients.includes('salmon')) {
+            category = 'Seafood';
+        }
+
+        res.render('recipe', { 
+            recipe: {
+                ...recipe[0],
+                category,
+                instructionSteps
+            },
+
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).render('error', { 
+            error: 'Error fetching recipe'
+        });
     }
-
-    // Get recipe ingredients
-    const [ingredients] = await db.query(`
-      SELECT i.* 
-      FROM ingredients i 
-      JOIN recipe_ingredients ri ON i.id = ri.ingredient_id 
-      WHERE ri.recipe_id = ?
-    `, [req.params.id]);
-
-    const recipe = {
-      ...recipes[0],
-      ingredients: ingredients
-    };
-
-    res.render('recipe', { recipe });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).render('error', { error: 'Error fetching recipe' });
-  }
 });
 
-// Add recipe form
-router.get('/add-recipe', async (req, res) => {
-  try {
-    const [ingredients] = await db.query(`
-      SELECT * FROM ingredients 
-      ORDER BY FIELD(type, 'protein', 'vegetable', 'grain', 'dairy', 'spice', 'other'), name
-    `);
-    res.render('add-recipe', { ingredients });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).render('error', { error: 'Error loading add recipe form' });
-  }
-});
-
-// Handle new recipe submission
+// Add new recipe
 router.post('/add-recipe', async (req, res) => {
-  const { name, instructions, ingredients } = req.body;
-  
-  if (!Array.isArray(ingredients)) {
-    return res.status(400).render('error', { error: 'Invalid ingredients format' });
-  }
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
 
-  const conn = await db.getConnection();
-  try {
-    await conn.beginTransaction();
+        const { name, instructions, ingredients } = req.body;
+        
+        // Validate input
+        if (!name || !instructions || !ingredients) {
+            throw new Error('Missing required fields');
+        }
 
-    // Insert recipe
-    const [recipeResult] = await conn.query(
-      'INSERT INTO recipes (name, instructions) VALUES (?, ?)',
-      [name, instructions]
-    );
+        // Insert recipe
+        const [recipeResult] = await conn.query(
+            'INSERT INTO recipes (name, instructions) VALUES (?, ?)',
+            [name, instructions]
+        );
 
-    // Insert recipe ingredients
-    if (ingredients.length > 0) {
-      const ingredientValues = ingredients.map(id => [recipeResult.insertId, parseInt(id)]);
-      await conn.query(
-        'INSERT INTO recipe_ingredients (recipe_id, ingredient_id) VALUES ?',
-        [ingredientValues]
-      );
+        const ingredientArray = Array.isArray(ingredients) ? ingredients : [ingredients];
+
+        if (ingredientArray.length > 0) {
+            const ingredientValues = ingredientArray.map(id => [recipeResult.insertId, parseInt(id)]);
+            await conn.query(
+                'INSERT INTO recipe_ingredients (recipe_id, ingredient_id) VALUES ?',
+                [ingredientValues]
+            );
+        }
+
+        await conn.commit();
+        res.redirect('/recipes');
+
+    } catch (error) {
+        await conn.rollback();
+        console.error('Error:', error);
+        res.status(500).render('error', {
+            error: 'Error adding recipe'
+        });
+    } finally {
+        conn.release();
     }
+});
 
-    await conn.commit();
-    res.redirect(`/recipe/${recipeResult.insertId}`);
-  } catch (error) {
-    await conn.rollback();
-    console.error('Error:', error);
-    res.status(500).render('error', { error: 'Error adding recipe' });
-  } finally {
-    conn.release();
-  }
+router.get('/api/ingredients', async (req, res) => {
+    try {
+        const [ingredients] = await db.query('SELECT name, info FROM ingredients');
+        res.json(ingredients);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Error fetching ingredients' });
+    }
 });
 
 module.exports = router;
